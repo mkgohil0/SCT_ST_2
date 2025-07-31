@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Encryption Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background-color: #000000;
+            background-image: url('https://images.pexels.com/photos/1169754/pexels-photo-1169754.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2');
+            background-size: cover;
+            background-position: center;
+        }
+        .nebula-container {
+            background-color: rgba(10, 5, 25, 0.7);
+            border: 1px solid rgba(192, 38, 211, 0.5);
+            color: #e5e7eb; /* Light Gray/Silver */
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 25px rgba(192, 38, 211, 0.4);
+        }
+        .glass-button {
+            background-color: rgba(37, 99, 235, 0.4); /* Blue with transparency */
+            color: #f0f9ff;
+            border: 1px solid rgba(37, 99, 235, 0.8);
+            text-shadow: 0 0 5px #60a5fa;
+        }
+        .loader {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #c026d3; /* Fuchsia */
+            border-bottom-color: #2563eb; /* Blue */
+            animation: spin 1.5s linear infinite;
+        }
+        .loader::before {
+             content: '';
+            position: absolute;
+            inset: 5px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #f472b6; /* Pink */
+            border-bottom-color: #60a5fa; /* Light Blue */
+            animation: spin 3s linear infinite;
+        }
+         .loader::after {
+             content: '';
+            position: absolute;
+            inset: 12px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            border-top-color: #f0f9ff; /* Lightest Blue */
+            border-bottom-color: #f0f9ff;
+            animation: spin 1s linear infinite reverse;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .method-btn-active {
+            background-color: #c026d3;
+            color: #ffffff;
+            border-color: #f472b6;
+            box-shadow: 0 0 10px #c026d3;
+        }
+        /* Ripple effect styles */
+        .ripple-effect {
+            position: relative;
+            overflow: hidden;
+        }
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(244, 114, 182, 0.5); /* Pink ripple */
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+        }
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-5xl nebula-container rounded-xl p-6 md:p-8 relative">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-white">Image Encryption Tool</h1>
+            <p class="text-fuchsia-300 mt-2 text-lg">Encrypt and decrypt images directly in your browser.</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Controls Column -->
+            <div class="bg-black/20 border border-fuchsia-500/30 rounded-lg p-6 flex flex-col space-y-6">
+                
+                <!-- Step 1: Upload Image -->
+                <div>
+                    <h2 class="text-xl font-bold text-white mb-2">1. Upload Image</h2>
+                    <label class="custom-file-button w-full">
+                        <input type="file" id="imageLoader" accept="image/*">
+                        <span class="w-full block text-center glass-button font-bold py-3 px-4 rounded-lg cursor-pointer hover:bg-blue-500/60 transition-all duration-300 ripple-effect">
+                           Select Image
+                        </span>
+                    </label>
+                    <p id="fileName" class="text-sm text-blue-300 mt-2 text-center truncate"></p>
+                </div>
+
+                <!-- Step 2: Choose Method -->
+                <div>
+                    <h2 class="text-xl font-bold text-white mb-2">2. Choose Encryption Method</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="swapBtn" class="method-btn bg-black/40 border border-fuchsia-500/50 text-fuchsia-200 font-bold py-3 px-4 rounded-lg focus:outline-none transition-all ripple-effect">Pixel Swap</button>
+                        <button id="mathBtn" class="method-btn bg-black/40 border border-fuchsia-500/50 text-fuchsia-200 font-bold py-3 px-4 rounded-lg focus:outline-none transition-all ripple-effect">Math Operation</button>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Set Key -->
+                <div>
+                    <h2 class="text-xl font-bold text-white mb-2">3. Set Secret Key</h2>
+                    <input type="text" id="key" placeholder="Enter secret key..." class="w-full bg-black/40 border border-blue-400/50 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-fuchsia-400 transition text-blue-200">
+                </div>
+
+                <!-- Step 4: Actions -->
+                <div>
+                    <h2 class="text-xl font-bold text-white mb-2">4. Process Image</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <button id="encryptBtn" class="action-btn bg-green-500 hover:bg-green-400 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed text-black font-bold py-3 px-4 rounded-lg transition-colors ripple-effect" disabled>ENCRYPT</button>
+                        <button id="decryptBtn" class="action-btn bg-red-500 hover:bg-red-400 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed text-black font-bold py-3 px-4 rounded-lg transition-colors ripple-effect" disabled>DECRYPT</button>
+                        <button id="resetBtn" class="action-btn bg-gray-600 hover:bg-gray-500 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors ripple-effect" disabled>RESET</button>
+                    </div>
+                </div>
+
+                <!-- Download -->
+                 <div>
+                    <a id="downloadLink" class="hidden w-full text-center glass-button font-bold py-3 px-4 hover:bg-blue-500/60 transition-all duration-300 ripple-effect">
+                        Download Processed Image
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- Image Display Column -->
+            <div class="border border-fuchsia-500/30 bg-black/20 rounded-lg p-4 flex flex-col items-center justify-center min-h-[300px] lg:min-h-full relative">
+                <div id="loader" class="loader hidden"></div>
+                <p id="status" class="text-blue-300 mb-4 hidden"></p>
+                <canvas id="canvas" class="max-w-full max-h-full rounded-md"></canvas>
+                <p id="placeholder" class="text-gray-600 text-xl">Your image will appear here</p>
+            </div>
+        </div>
+        <!-- Message Modal -->
+        <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-md flex items-center justify-center hidden z-50">
+            <div class="nebula-container p-6 w-11/12 max-w-sm text-center rounded-xl">
+                <p id="messageText" class="text-slate-200 mb-4 text-lg"></p>
+                <button onclick="closeModal()" class="glass-button font-bold py-2 px-6 rounded-lg ripple-effect">Acknowledge</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const imageLoader = document.getElementById('imageLoader');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const keyInput = document.getElementById('key');
+        const encryptBtn = document.getElementById('encryptBtn');
+        const decryptBtn = document.getElementById('decryptBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const actionBtns = document.querySelectorAll('.action-btn');
+        const downloadLink = document.getElementById('downloadLink');
+        const placeholder = document.getElementById('placeholder');
+        const fileNameDisplay = document.getElementById('fileName');
+        const loader = document.getElementById('loader');
+        const statusText = document.getElementById('status');
+        const messageModal = document.getElementById('messageModal');
+        const messageText = document.getElementById('messageText');
+
+        // --- State Variables ---
+        let currentMethod = 'swap';
+        let originalImageData = null;
+        let isImageLoaded = false;
+
+        // --- Event Listeners ---
+        imageLoader.addEventListener('change', handleImage, false);
+        encryptBtn.addEventListener('click', () => processImage('encrypt'));
+        decryptBtn.addEventListener('click', () => processImage('decrypt'));
+        resetBtn.addEventListener('click', resetImage);
+        document.getElementById('swapBtn').addEventListener('click', () => setMethod('swap'));
+        document.getElementById('mathBtn').addEventListener('click', () => setMethod('math'));
+
+        // --- Functions ---
+        function showMessage(msg) {
+            messageText.textContent = msg;
+            messageModal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            messageModal.classList.add('hidden');
+        }
+
+        function setMethod(method) {
+            currentMethod = method;
+            const swapBtn = document.getElementById('swapBtn');
+            const mathBtn = document.getElementById('mathBtn');
+            
+            if (method === 'swap') {
+                swapBtn.classList.add('method-btn-active');
+                mathBtn.classList.remove('method-btn-active');
+            } else {
+                mathBtn.classList.add('method-btn-active');
+                swapBtn.classList.remove('method-btn-active');
+            }
+        }
+
+        function handleImage(e) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    isImageLoaded = true;
+                    placeholder.classList.add('hidden');
+                    canvas.classList.remove('hidden');
+                    actionBtns.forEach(btn => btn.disabled = false);
+                    downloadLink.classList.add('hidden');
+                }
+                img.src = event.target.result;
+            }
+            if (e.target.files[0]) {
+                reader.readAsDataURL(e.target.files[0]);
+                fileNameDisplay.textContent = `Loaded: ${e.target.files[0].name}`;
+            }
+        }
+        
+        function resetImage() {
+            if (!isImageLoaded) {
+                showMessage('No image has been loaded.');
+                return;
+            }
+            ctx.putImageData(originalImageData, 0, 0);
+            downloadLink.classList.add('hidden');
+            showMessage('Image has been restored to its original state.');
+        }
+
+        function createSeededRandom(seed) {
+            let h = 1779033703 ^ seed.length;
+            for (let i = 0; i < seed.length; i++) {
+                h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
+                h = h << 13 | h >>> 19;
+            }
+            return function() {
+                h = Math.imul(h ^ h >>> 16, 2246822507);
+                h = Math.imul(h ^ h >>> 13, 3266489909);
+                return ((h ^= h >>> 16) >>> 0) / 4294967296;
+            }
+        }
+
+        async function processImage(mode) {
+            if (!isImageLoaded) {
+                showMessage('No image has been loaded.');
+                return;
+            }
+            const key = keyInput.value;
+            if (!key) {
+                showMessage('A secret key is required.');
+                return;
+            }
+
+            showLoader(true, `Processing image...`);
+            actionBtns.forEach(btn => btn.disabled = true);
+            
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            try {
+                let imageData;
+                if (mode === 'encrypt') {
+                    ctx.putImageData(originalImageData, 0, 0);
+                    imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                } else { // 'decrypt'
+                    imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                }
+
+                if (currentMethod === 'swap') {
+                    if (mode === 'encrypt') {
+                        pixelSwapEncrypt(imageData.data, key);
+                    } else {
+                        pixelSwapDecrypt(imageData.data, key);
+                    }
+                } else { // 'math'
+                    mathOperation(imageData.data, key);
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                
+                downloadLink.href = canvas.toDataURL('image/png');
+                downloadLink.download = `${mode}ed-image.png`;
+                downloadLink.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Processing error:", error);
+                showMessage("Process failed. The image may be too large or the key is invalid.");
+            } finally {
+                showLoader(false);
+                actionBtns.forEach(btn => btn.disabled = false);
+            }
+        }
+        
+        function showLoader(show, text = '') {
+            if (show) {
+                loader.classList.remove('hidden');
+                statusText.classList.remove('hidden');
+                statusText.textContent = text;
+                canvas.classList.add('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                loader.classList.add('hidden');
+                statusText.classList.add('hidden');
+                canvas.classList.remove('hidden');
+            }
+        }
+        
+        function swapPixels(data, i_pos, j_pos) {
+            const r = data[i_pos];
+            const g = data[i_pos + 1];
+            const b = data[i_pos + 2];
+            const a = data[i_pos + 3];
+            data[i_pos] = data[j_pos];
+            data[i_pos + 1] = data[j_pos + 1];
+            data[i_pos + 2] = data[j_pos + 2];
+            data[i_pos + 3] = data[j_pos + 3];
+            data[j_pos] = r;
+            data[j_pos + 1] = g;
+            data[j_pos + 2] = b;
+            data[j_pos + 3] = a;
+        }
+
+        function pixelSwapEncrypt(data, key) {
+            const random = createSeededRandom(key);
+            const pixelCount = data.length / 4;
+            for (let i = pixelCount - 1; i > 0; i--) {
+                const j = Math.floor(random() * (i + 1));
+                swapPixels(data, i * 4, j * 4);
+            }
+        }
+        
+        function pixelSwapDecrypt(data, key) {
+            const random = createSeededRandom(key);
+            const pixelCount = data.length / 4;
+            const jValues = [];
+            for (let i = pixelCount - 1; i > 0; i--) {
+                jValues.push(Math.floor(random() * (i + 1)));
+            }
+            for (let i = 1; i < pixelCount; i++) {
+                const j = jValues.pop();
+                swapPixels(data, i * 4, j * 4);
+            }
+        }
+
+        function mathOperation(data, key) {
+            let numericKey = 0;
+            for (let i = 0; i < key.length; i++) {
+                numericKey = (numericKey + key.charCodeAt(i)) % 256;
+            }
+            if (numericKey === 0) numericKey = 1;
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] ^= numericKey;
+                data[i + 1] ^= numericKey;
+                data[i + 2] ^= numericKey;
+            }
+        }
+        
+        /**
+         * Creates a ripple effect on button click.
+         * @param {MouseEvent} event - The click event.
+         */
+        function createRipple(event) {
+            const button = event.currentTarget;
+            const circle = document.createElement("span");
+            const diameter = Math.max(button.clientWidth, button.clientHeight);
+            const radius = diameter / 2;
+
+            circle.style.width = circle.style.height = `${diameter}px`;
+            circle.style.left = `${event.clientX - button.getBoundingClientRect().left - radius}px`;
+            circle.style.top = `${event.clientY - button.getBoundingClientRect().top - radius}px`;
+            circle.classList.add("ripple");
+
+            const ripple = button.getElementsByClassName("ripple")[0];
+            if (ripple) {
+                ripple.remove();
+            }
+
+            button.appendChild(circle);
+        }
+
+        // --- Initial Setup ---
+        function initialize() {
+            setMethod('swap');
+            // Add ripple effect to all designated buttons
+            const rippleButtons = document.querySelectorAll('.ripple-effect');
+            rippleButtons.forEach(button => {
+                button.addEventListener('click', createRipple);
+            });
+        }
+
+        initialize();
+
+    </script>
+</body>
+</html>
